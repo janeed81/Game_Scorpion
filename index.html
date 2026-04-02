@@ -380,6 +380,7 @@ function eat(winner,loser){
 
 // ── AI ──
 function aiThink(){
+  if(!P||!AI)return;
   AI.timer++;
   if(AI.timer<AI.interval)return;
   AI.timer=0;
@@ -424,7 +425,15 @@ function updLevel(){ document.getElementById('lvl').textContent='关卡 '+level;
 
 // ── 主循环 ──
 function loop(){
-  if(!running){requestAnimationFrame(loop);return;}
+  if(!running){
+    // 未开始：只画背景，不碰P/AI
+    if(cv.width>0){
+      ctx.fillStyle='#16213e';
+      ctx.fillRect(0,0,cv.width,cv.height);
+    }
+    requestAnimationFrame(loop);
+    return;
+  }
   frame++;
   if(P.atkCD>0)P.atkCD--;
   if(P.inv>0)P.inv--;
@@ -438,6 +447,7 @@ function loop(){
 
 // ── 绘制 ──
 function draw(){
+  if(!P||!AI)return;
   ctx.fillStyle='#16213e'; ctx.fillRect(0,0,cv.width,cv.height);
   // 网格
   ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=0.5;
@@ -551,8 +561,11 @@ function closePrize(){ hide('m-prize'); }
 function show(id){ document.getElementById(id).style.display='flex'; }
 function hide(id){ document.getElementById(id).style.display='none'; }
 
-// 启动循环（canvas一直在刷新背景，等待点击）
-requestAnimationFrame(loop);
+// 页面加载完成后启动空循环
+window.addEventListener('load', function(){
+  resizeCanvas();
+  requestAnimationFrame(loop);
+});
 </script>
 </body>
 </html>
