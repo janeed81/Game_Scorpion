@@ -377,12 +377,9 @@ function eat(winner,loser){
   let stolen=loser.score; winner.score+=stolen; loser.score=0;
   for(let i=0;i<3;i++) winner.seg.push({...winner.seg[winner.seg.length-1]});
   if(loser===P){
-    let sp=safePos(); P.x=sp.x; P.y=sp.y;
-    P.seg=[{x:sp.x,y:sp.y},{x:clamp(sp.x-1,0,COLS()-1),y:sp.y}];
-    P.inv=300; // 延长无敌时间从180到300帧（约5秒）
+    // 玩家被吃：显示-分数，但不立即复活
     float('😵-'+stolen,P.x,P.y,'#ff4444');
-    float('💫 复活！',P.x,P.y-1,'#00ffff'); // 添加复活提示
-    setTimeout(showAd,1200);
+    setTimeout(showAd,1200); // 延迟显示复活界面
   } else {
     let sp=safePos(); AI.x=sp.x; AI.y=sp.y;
     AI.seg=[{x:sp.x,y:sp.y},{x:clamp(sp.x+1,0,COLS()-1),y:sp.y}];
@@ -607,8 +604,15 @@ document.getElementById('ad-btn').addEventListener('click',function(){
 
 function closeAd(){
   hide('m-ad');
-  running=true; P.inv=300; // 修复：与eat函数保持一致，改为300帧
   document.getElementById('ad-txt').innerHTML='请等待 <span id="ad-sec">5</span> 秒';
+  
+  // 在点击复活按钮后才真正复活玩家
+  let sp=safePos(); 
+  P.x=sp.x; P.y=sp.y;
+  P.seg=[{x:sp.x,y:sp.y},{x:clamp(sp.x-1,0,COLS()-1),y:sp.y}];
+  P.inv=300; // 无敌时间5秒
+  float('💫 复活！',P.x,P.y,'#00ffff'); // 复活提示
+  
   const prizes=[
     {ico:'🦕',txt:'解锁亮黄恐龙！\n下局使用！',unlock:true},
     {ico:'🫐×10',txt:'蓝莓加成！\n得分+20！',score:20},
@@ -623,7 +627,10 @@ function closeAd(){
   if(p.atk)P.atkCD=0;
   show('m-prize');
 }
-function closePrize(){ hide('m-prize'); }
+function closePrize(){ 
+  hide('m-prize'); 
+  running=true; // 点击抽奖按钮后才真正恢复游戏
+}
 
 function show(id){ document.getElementById(id).style.display='flex'; }
 function hide(id){ document.getElementById(id).style.display='none'; }
