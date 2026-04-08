@@ -379,7 +379,9 @@ function eat(winner,loser){
   if(loser===P){
     let sp=safePos(); P.x=sp.x; P.y=sp.y;
     P.seg=[{x:sp.x,y:sp.y},{x:clamp(sp.x-1,0,COLS()-1),y:sp.y}];
-    P.inv=180; float('😵-'+stolen,P.x,P.y,'#ff4444');
+    P.inv=300; // 延长无敌时间从180到300帧（约5秒）
+    float('😵-'+stolen,P.x,P.y,'#ff4444');
+    float('💫 复活！',P.x,P.y-1,'#00ffff'); // 添加复活提示
     setTimeout(showAd,1200);
   } else {
     let sp=safePos(); AI.x=sp.x; AI.y=sp.y;
@@ -508,12 +510,34 @@ function draw(){
     }
   }
   drawC(P); drawC(AI);
-  // 无敌光环
+  // 无敌光环（改进：剩余时间少时变红闪烁警告）
   if(P.inv>0){
     let alpha=0.3+0.4*Math.sin(frame*0.3);
-    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle='#aaddff'; ctx.lineWidth=3;
+    let color='#aaddff'; // 默认蓝色
+    let lineWidth=3;
+    
+    // 剩余时间少于2秒（120帧）时变红并快速闪烁警告
+    if(P.inv<120){
+      color='#ff4444'; // 红色警告
+      alpha=0.5+0.5*Math.sin(frame*0.8); // 更快的闪烁
+      lineWidth=4; // 更粗的线条
+    }
+    
+    ctx.save(); ctx.globalAlpha=alpha; ctx.strokeStyle=color; ctx.lineWidth=lineWidth;
     ctx.beginPath(); ctx.arc(P.x*TILE+TILE/2,P.y*TILE+TILE/2,TILE*0.9,0,Math.PI*2); ctx.stroke();
     ctx.restore();
+    
+    // 在无敌时间少于2秒时显示倒计时
+    if(P.inv<120){
+      let secLeft = Math.ceil(P.inv/60);
+      ctx.save();
+      ctx.fillStyle='#ff4444';
+      ctx.font='bold 14px Arial';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillText(secLeft+'s',P.x*TILE+TILE/2,P.y*TILE-TILE);
+      ctx.restore();
+    }
   }
   // 关卡升级提示
   if(lvUpTimer>0){
@@ -583,7 +607,7 @@ document.getElementById('ad-btn').addEventListener('click',function(){
 
 function closeAd(){
   hide('m-ad');
-  running=true; P.inv=180;
+  running=true; P.inv=300; // 修复：与eat函数保持一致，改为300帧
   document.getElementById('ad-txt').innerHTML='请等待 <span id="ad-sec">5</span> 秒';
   const prizes=[
     {ico:'🦕',txt:'解锁亮黄恐龙！\n下局使用！',unlock:true},
