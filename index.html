@@ -254,8 +254,16 @@ function restartGame(){
 // ── 按钮绑定（统一用 touchstart + click 双绑定）──
 function bindBtn(id, fn){
   const el=document.getElementById(id);
-  el.addEventListener('touchstart', e=>{ e.preventDefault(); fn(); }, {passive:false});
-  el.addEventListener('click', fn);
+  let handled = false;
+  el.addEventListener('touchstart', e=>{ 
+    e.preventDefault(); 
+    handled = true;
+    fn(); 
+  }, {passive:false});
+  el.addEventListener('click', e=>{ 
+    if(!handled) fn();
+    handled = false;
+  });
 }
 
 bindBtn('start-btn',  startGame);
@@ -285,7 +293,14 @@ document.getElementById('atk').addEventListener('click',doAtk);
 
 document.addEventListener('keydown',e=>{
   if(!running)return;
-  ({ArrowUp:()=>moveP(0,-1),ArrowDown:()=>moveP(0,1),ArrowLeft:()=>moveP(-1,0),ArrowRight:()=>moveP(1,0),' ':doAtk}[e.key]||()=>{})();
+  const actions = {
+    'ArrowUp': ()=>moveP(0,-1),
+    'ArrowDown': ()=>moveP(0,1),
+    'ArrowLeft': ()=>moveP(-1,0),
+    'ArrowRight': ()=>moveP(1,0),
+    ' ': doAtk
+  };
+  (actions[e.key] || (()=>{}))();
 });
 
 // ── 移动 ──
